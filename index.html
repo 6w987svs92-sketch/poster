@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wall</title>
+<style>
+  :root {
+    --wall: #f0ead6;
+    --wood-light: #b98a5a;
+    --wood-mid: #a07040;
+    --wood-dark: #7e552d;
+    --gap: clamp(20px, 5vw, 64px);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
+
+  body {
+    background: var(--wall);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--gap);
+    font-family: Georgia, "Times New Roman", serif;
+  }
+
+  .wall {
+    width: 100%;
+    max-width: 1200px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--gap);
+  }
+
+  .frame {
+    position: relative;
+    aspect-ratio: 3 / 4;
+    padding: clamp(8px, 1.6vw, 18px);
+    background:
+      repeating-linear-gradient(
+        92deg,
+        rgba(0,0,0,0) 0 6px,
+        rgba(0,0,0,0.05) 6px 7px,
+        rgba(255,255,255,0.04) 7px 11px
+      ),
+      linear-gradient(145deg, var(--wood-light), var(--wood-mid) 55%, var(--wood-dark));
+    border-radius: 2px;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.25) inset,
+      0 -1px 0 rgba(0,0,0,0.25) inset,
+      0 10px 18px rgba(60, 40, 20, 0.22),
+      0 2px 4px rgba(60, 40, 20, 0.25);
+  }
+
+  .slot {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: #fbf8ee;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    color: #8a8372;
+  }
+
+  .slot:focus-visible {
+    outline: 3px solid #3b6ea5;
+    outline-offset: 3px;
+  }
+
+  .slot img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none;
+  }
+
+  .slot.filled img { display: block; }
+  .slot.filled .hint { display: none; }
+
+  .hint {
+    font-size: clamp(12px, 1.4vw, 16px);
+    text-align: center;
+    padding: 0 12px;
+    pointer-events: none;
+  }
+
+  .slot.dragover {
+    background: #efe7cc;
+  }
+
+  input[type="file"] { display: none; }
+
+  @media (max-width: 600px) {
+    body { align-items: flex-start; }
+    .wall {
+      grid-template-columns: 1fr;
+      max-width: 340px;
+    }
+  }
+</style>
+</head>
+<body>
+  <main class="wall">
+    <div class="frame">
+      <button class="slot" type="button" aria-label="Add artwork to frame 1">
+        <img alt="Artwork 1">
+        <span class="hint">Click or drop an image</span>
+        <input type="file" accept="image/*">
+      </button>
+    </div>
+    <div class="frame">
+      <button class="slot" type="button" aria-label="Add artwork to frame 2">
+        <img alt="Artwork 2">
+        <span class="hint">Click or drop an image</span>
+        <input type="file" accept="image/*">
+      </button>
+    </div>
+    <div class="frame">
+      <button class="slot" type="button" aria-label="Add artwork to frame 3">
+        <img alt="Artwork 3">
+        <span class="hint">Click or drop an image</span>
+        <input type="file" accept="image/*">
+      </button>
+    </div>
+  </main>
+
+<script>
+  document.querySelectorAll('.slot').forEach(function (slot) {
+    var input = slot.querySelector('input');
+    var img = slot.querySelector('img');
+
+    function show(file) {
+      if (!file || !file.type.startsWith('image/')) return;
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        img.src = e.target.result;
+        slot.classList.add('filled');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    slot.addEventListener('click', function () { input.click(); });
+    input.addEventListener('click', function (e) { e.stopPropagation(); });
+    input.addEventListener('change', function () {
+      show(input.files[0]);
+      input.value = '';
+    });
+
+    slot.addEventListener('dragover', function (e) {
+      e.preventDefault();
+      slot.classList.add('dragover');
+    });
+    slot.addEventListener('dragleave', function () {
+      slot.classList.remove('dragover');
+    });
+    slot.addEventListener('drop', function (e) {
+      e.preventDefault();
+      slot.classList.remove('dragover');
+      show(e.dataTransfer.files[0]);
+    });
+  });
+
+  // Stop the browser opening a dropped image if it misses a frame
+  ['dragover', 'drop'].forEach(function (evt) {
+    window.addEventListener(evt, function (e) { e.preventDefault(); });
+  });
+</script>
+</body>
+</html>
