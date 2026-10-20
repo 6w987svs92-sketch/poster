@@ -1,0 +1,33 @@
+name: Job digest
+
+on:
+  schedule:
+    # Runs at 14:30 and 15:30 UTC on weekdays. The script only sends the one
+    # that falls in the 4 PM hour in Berlin, which handles summer/winter time.
+    - cron: "30 14,15 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - run: python digest.py
+        env:
+          ADZUNA_APP_ID: ${{ secrets.ADZUNA_APP_ID }}
+          ADZUNA_APP_KEY: ${{ secrets.ADZUNA_APP_KEY }}
+          GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+      - name: Save sent-jobs list
+        run: |
+          git config user.name "job-digest-bot"
+          git config user.email "job-digest-bot@users.noreply.github.com"
+          git add seen.json
+          git diff --cached --quiet || (git commit -m "Update sent jobs" && git push)
