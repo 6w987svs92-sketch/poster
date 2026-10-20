@@ -50,6 +50,11 @@ errors = []
 
 
 # ----------------------------- helpers -------------------------------
+def redact(msg):
+    """Remove query strings (which hold API keys) from error text."""
+    return re.sub(r"(https?://[^\s?]+)\?\S*", r"\1", str(msg))
+
+
 def clean(text):
     text = html.unescape(text or "")
     text = re.sub(r"<[^>]+>", " ", text)
@@ -315,7 +320,7 @@ def render(watch_jobs, search_jobs, with_feed, no_feed):
     if no_feed:
         foot.append("No job feed found (searched via Adzuna only, so roles may be missed): " + ", ".join(no_feed))
     if errors:
-        foot.append("Problems during this run: " + " | ".join(errors[:10]))
+        foot.append("Problems during this run: " + " | ".join(redact(e)[:200] for e in errors[:10]))
     parts.append('<hr><p style="color:#888;font-size:12px">' + "<br>".join(html.escape(f) for f in foot) + "</p>")
     return "".join(parts)
 
